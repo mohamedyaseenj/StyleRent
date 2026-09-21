@@ -1,155 +1,150 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
-import { useAuth } from '../../context/AuthContext'
-import FormInput from '../../components/FormInput'
-import Button from '../../components/Button'
-import { mockUsers } from '../../data/mockData'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { LogIn, ShieldCheck, UserRound, Store } from 'lucide-react'
+import FormInput from '../../components/common/FormInput'
+import Button from '../../components/common/Button'
+import { validateLogin } from '../../utils/validation'
+import { useAuth, DEMO_ACCOUNTS } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 
 export default function Login() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    rememberMe: false,
-  })
-  const [errors, setErrors] = useState({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [apiError, setApiError] = useState('')
-  const { login } = useAuth()
+  const { login, register } = useAuth() // register used for demo fallback
+  const toast = useToast()
   const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || '/'
+  const [params] = useSearchParams()
+  const redirect = params.get('redirect') || '/'
 
-  const validate = () => {
-    const newErrors = {}
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email'
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required'
-    }
-    return newErrors
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [errors, setErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [demoBusy, setDemoBusy] = useState(null)
+
+  const goHome = (user) => {
+    if (user?.role === 'OWNER') navigate('/owner')
+    else if (user?.role === 'ADMIN') navigate('/admin')
+    else navigate(redirect)
   }
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault()
-    setApiError('')
-    const validationErrors = validate()
-    setErrors(validationErrors)
-
-    if (Object.keys(validationErrors).length > 0) return
-
-    setIsSubmitting(true)
-
-    setTimeout(() => {
-      const user = mockUsers.find(
-        (u) => u.email.toLowerCase() === formData.email.toLowerCase()
-      )
-
-      if (!user) {
-        setApiError('Invalid email or password')
-        setIsSubmitting(false)
-        return
-      }
-
-      const roleRoutes = {
-        admin: '/admin',
-        owner: '/owner',
-        customer: '/rentals',
-      }
-
-      login(user)
-      navigate(roleRoutes[user.role] || '/rentals', { replace: true })
-      setIsSubmitting(false)
-    }, 800)
+    const validation = validateLogin({ email, password })
+    if (!validation.valid) {
+      setErrors(validation.errors)
+      return
+    }
+    setSubmitting(true)
+    setErrors({})
+    try {
+      const user = await login(email.trim(), password)
+      toast.success(`Welcome back, ${user.name}!`)
+      goHome(user)
+    } catch (err) {
+      setErrors({ server: err.message })
+      toast.error(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }))
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }))
+  const quickLogin = async (account) => {
+    setDemoBusy(account.role)
+    setErrors({})
+    try {
+      const user = await login(account.email, account.password)
+      toast.success(`Logged in as ${account.label}`)
+      goHome(user)
+    } catch {
+      // If the demo user was removed, recreate a session through register mock.
+      try {
+        const user = await register({
+          name: account.label,
+          email: account.email,
+          password: account.password,
+        })
+        toast.success(`Demo ${account.label} account created`)
+        goHome(user)
+      } catch (err) {
+        setErrors({ server: err.message })
+      }
+    } finally {
+      setDemoBusy(null)
     }
-    setApiError('')
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-alt py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="card p-8">
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold font-heading text-primary mb-2">
-              <FiMail className="text-accent" />
-              StyleRent
-            </Link>
-            <h2 className="text-2xl font-bold font-heading">Welcome Back</h2>
-            <p className="text-text-light mt-1">Sign in to your account</p>
-          </div>
-
-          {apiError && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
-              {apiError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-            <FormInput
-              label="Email Address"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-              error={errors.email}
-              required
-            />
-
-            <FormInput
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              error={errors.password}
-              required
-            />
-
-            <div className="flex items-center justify-between mb-6">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent"
-                />
-                <span className="text-sm text-text">Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="text-sm text-accent hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-
-            <Button type="submit" variant="primary" size="lg" loading={isSubmitting} className="w-full">
-              Sign In
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-text-light">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-accent font-medium hover:underline">
-                Create one
-              </Link>
-            </p>
-          </div>
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="text-center mb-4">
+          <h1 className="auth-title">Welcome back</h1>
+          <p className="text-muted-sr small">Sign in to continue renting.</p>
         </div>
+
+        {errors.server ? (
+          <div className="alert alert-danger small py-2" role="alert">
+            {errors.server}
+          </div>
+        ) : null}
+
+        <form onSubmit={submit} noValidate>
+          <FormInput
+            id="login-email"
+            label="Email Address"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email}
+            autoComplete="email"
+          />
+          <FormInput
+            id="login-password"
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            autoComplete="current-password"
+          />
+          <Button type="submit" block loading={submitting} icon={LogIn}>
+            Sign In
+          </Button>
+        </form>
+
+        <div className="text-center mt-3">
+          <span className="text-muted-sr small">
+            New to StyleRent?{' '}
+            <Link to={`/register?redirect=${encodeURIComponent(redirect)}`} className="link-gold fw-semibold">
+              Create an account
+            </Link>
+          </span>
+        </div>
+
+        <div className="divider-sr mt-4 mb-3">
+          <span>Quick demo</span>
+        </div>
+        <div className="row g-2">
+          {DEMO_ACCOUNTS.map((acct) => {
+            const Icon = acct.role === 'ADMIN' ? ShieldCheck : acct.role === 'OWNER' ? Store : UserRound
+            return (
+              <div className="col-4" key={acct.role}>
+                <button
+                  type="button"
+                  className="btn btn-sr-light btn-sr-sm w-100 d-flex flex-column align-items-center gap-1 py-3"
+                  onClick={() => quickLogin(acct)}
+                  disabled={demoBusy !== null}
+                >
+                  <Icon size={18} aria-hidden="true" />
+                  <span className="small">{acct.label}</span>
+                </button>
+              </div>
+            )
+          })}
+        </div>
+        <p className="text-muted-sr small text-center mt-3 mb-0">
+          One tap demo accounts — try the full Store, Owner or Admin experience.
+        </p>
       </div>
     </div>
   )

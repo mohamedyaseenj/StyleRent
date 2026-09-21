@@ -1,200 +1,135 @@
-StyleRent 👗
-Smart Clothing Rental & Inventory Management Platform
-StyleRent is a modern, responsive frontend application designed for a clothing rental and boutique inventory management platform. It provides customers with an intuitive way to discover clothing, check rental availability, select rental dates, and manage their rentals, while providing dedicated interfaces for boutique owners and administrators.
-Frontend Repository — This repository contains the frontend implementation of StyleRent.
+# STYLERENT
 
-🎯 Objectives
+A premium, frontend-only luxury clothing rental platform. Browse an editorial
+catalogue, check live availability, book a rental, pay, and manage everything
+from customer, owner, and admin dashboards.
 
-Provide a modern digital clothing rental experience
-Simplify clothing discovery and rental booking
-Display clothing availability based on rental dates
-Provide size, color, category, and price filtering
-Create dedicated dashboards for customers, owners, and administrators
-Build a scalable frontend ready for Spring Boot REST API integration
+The app runs today entirely on bundled mock data and is wired to talk to a
+future **Spring Boot 3 / JPA** REST API without any UI changes.
 
-✨ Features
+---
 
-👤 Customer
+## Tech Stack
 
-Registration and login interface
-Clothing catalog
-Search and filtering
-Clothing details
-Size and color selection
-Rental date selection
-Rental booking interface
-Payment interface
-Rental history
-Rental status tracking
-Profile management
-Reviews and ratings
+| Layer      | Choice |
+|------------|--------|
+| UI         | React 19 |
+| Build      | Vite 8 |
+| Routing    | React Router 7 (`BrowserRouter`) |
+| Styling    | Bootstrap 5 + hand-written design system (`src/index.css`) |
+| Icons      | lucide-react |
+| HTTP       | Axios (with graceful mock fallback) |
+| Language   | JavaScript (ESM) — **no TypeScript** |
 
-🧑‍💼 Boutique Owner
+---
 
-Owner dashboard
-Clothing management
-Add/edit/delete clothing UI
-Inventory management
-Size and color management
-Stock monitoring
-Rental management
-Revenue and rental overview
+## Getting Started
 
-🛡️ Administrator
+```bash
+npm install
+npm run dev
+```
 
-Admin dashboard
-User management interface
-Clothing management
-Rental monitoring
-Inventory monitoring
-Reports and statistics
-Platform activity overview
+Open the printed local URL (default `http://localhost:5173`).
 
-🛠️ Technology Stack
+### Scripts
 
-Technology
-Purpose
-React.js
-Frontend framework
-Bootstrap / Tailwind CSS
-UI and responsive design
-Axios
-REST API communication
-Java 17
-Backend technology planned
-Spring Boot 3.x
-Backend REST API planned
-Spring Security + JWT
-Authentication planned
-Spring Data JPA + Hibernate
-Data layer planned
-MySQL 8
-Database planned
-Maven
-Backend build tool
-JUnit 5
-Backend testing
-Swagger / OpenAPI
-API documentation
-Technology Constraint
-This project follows the Java technology stack for the backend.
-Python, Django, Flask, PHP, and other backend technologies are not used.
+| Command           | Purpose |
+|-------------------|---------|
+| `npm run dev`     | Start the Vite dev server |
+| `npm run build`   | Production build to `dist/` |
+| `npm run preview` | Preview the production build |
+| `npm run lint`    | Lint with oxlint |
 
-🏗️ Frontend Architecture
+---
 
-                    StyleRent
-                       │
-                       ▼
-                 React.js UI
-                       │
-          ┌────────────┼────────────┐
-          ▼            ▼            ▼
-      Customer       Owner        Admin
-          │            │            │
-          └────────────┼────────────┘
-                       ▼
-                    Axios
-                       │
-                       ▼
-             Spring Boot REST API
-                       │
-                       ▼
-                    MySQL
-                    
-📂 Project Structure
+## Demo Accounts
 
+Passwords live only in `src/data/users.js` (never in `localStorage`).
+
+| Role     | Email                     | Password      |
+|----------|---------------------------|---------------|
+| Customer | `customer@stylerent.com`  | `customer123` |
+| Owner    | `owner@stylerent.com`     | `owner123`    |
+| Admin    | `admin@stylerent.com`     | `admin123`    |
+
+The login screen also offers one-click demo sign-in buttons.
+
+---
+
+## Features
+
+**Customer**
+- Editorial home page (hero, categories, trending, style edits, lookbook, how-it-works)
+- Catalogue with search, filters (category, size, colour, price), and sorting
+- Product detail with gallery, size/colour selectors, and an availability checker
+- Wishlist, booking, payment (Card / UPI / Cash on delivery), and rental success
+- My Rentals, rental details, profile editing, and review submission
+
+**Owner**
+- Dashboard stats, clothing inventory management (create/edit/delete), rentals, and revenue
+
+**Admin**
+- Platform dashboard, product approvals, categories, rentals, customers, and review moderation
+
+**Platform**
+- Role-based route guards (`USER` / `OWNER` / `ADMIN`)
+- Toast notifications, loading/empty/error states, and skeleton loaders
+- Session persistence and protected navigation with redirect-back
+
+---
+
+## Project Structure
+
+```
 src/
-├── components/
-├── pages/
-├── layouts/
-├── services/
-├── hooks/
-├── context/
-├── assets/
-├── data/
-├── utils/
-└── App.jsx
+  components/
+    common/      Button, Modal, FormInput, States, StatusBadge, StarRating,
+                 SmartImage, SearchBar, SectionHeading
+    layout/      Navbar, Footer, Layout
+    clothing/    ProductCard, ProductGrid, ProductFilters, ProductGallery,
+                 Selectors, AvailabilityChecker
+    review/      ReviewItem, RatingSummary, ReviewFormModal
+    dashboard/   DashboardShell, StatCard/DataTable, ClothingManager, RentalsManager
+  context/       Toast, Auth, Wishlist, Rental
+  data/          Mock data: products, categories, users, rentals, payments,
+                 reviews, trends, images
+  pages/         Customer pages + owner/ + admin/ + auth/
+  services/      api.js — Axios layer with mock fallback
+  utils/         dateUtils, priceUtils, validation, productUtils
+```
 
-🔄 Main User Flow
+---
 
-Home
- ↓
-Register / Login
- ↓
-Browse Clothing
- ↓
-View Clothing Details
- ↓
-Check Availability
- ↓
-Select Rental Dates
- ↓
-Rental Booking
- ↓
-Payment
- ↓
-Rental Tracking
- ↓
-Return
+## Mock Mode & the Future Backend
 
-🎨 UI Highlights
+`src/services/api.js` exposes `authAPI`, `userAPI`, `categoryAPI`, `clothingAPI`,
+`rentalAPI`, `paymentAPI`, and `reviewAPI`. Every call tries the real endpoint
+first and silently falls back to bundled mock data, so the UI never breaks while
+the backend is offline.
 
-Responsive design
-Fashion-focused visual identity
-Reusable React components
-Clean navigation
-Product cards
-Advanced filtering
-Dashboard cards
-Rental status indicators
-Form validation
-Loading and error states
-Mobile-friendly layouts
+Configure via `.env` (see `.env.example`):
 
-🔌 Backend Integration
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_MOCK=true
+```
 
-The frontend is structured to connect with the planned Java backend through REST APIs:
-React.js
-    ↓
-Axios
-    ↓
-Spring Boot REST API
-    ↓
-Spring Security + JWT
-    ↓
-Spring Data JPA / Hibernate
-    ↓
-MySQL 8
-During frontend development, mock data can be used until the Spring Boot backend APIs are available.
+Set `VITE_API_MOCK=false` to hit the real Spring Boot API.
 
-🚀 Future Enhancements
+### Data model
 
-AI-based clothing recommendations
-QR/barcode-based inventory tracking
-Email rental reminders
-Advanced analytics
-Multi-boutique support
-Mobile application
-Real-time notifications
+Exactly two core entities, per the spec: **`CLOTHING`** and **`CATEGORY`**.
+Rentals, payments, and reviews are modelled as supporting records around them.
 
-👨‍💻 Project Information
+---
 
-Project Name: StyleRent
-Project Type: Clothing Rental & Inventory Management Platform
-Repository: Frontend
-Frontend: React.js
-UI: Bootstrap / Tailwind CSS
-API Client: Axios
-Backend: Java 17 + Spring Boot 3.x
-Database: MySQL 8
+## Rental Pricing Rule
 
-📌 Project Status
+`days = endDate - startDate` (exclusive, minimum 1 day), and
 
-Frontend: 🚧 In Development
-Backend: 🔜 Planned
-Database Integration: 🔜 Planned
-API Integration: 🔜 Planned
+```
+total = pricePerDay × days × quantity
+```
 
-⭐ Repository Description
-
-StyleRent — A modern React-based clothing rental and inventory management platform designed for customers, boutique owners, and administrators.
+Dates use ISO `YYYY-MM-DD`; currency is formatted with Indian grouping (`₹`).

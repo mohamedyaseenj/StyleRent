@@ -1,0 +1,89 @@
+// Central image inventory for StyleRent.
+// All URLs are stable Pexels CDN links (verified). Every consumer must use
+// <SmartImage/> (fallback handling) so a failed image never shows a broken icon.
+
+export const px = (id, w = 900) =>
+  `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`
+
+export const IMAGES = {
+  hero: px(32628114, 1400),
+  editorial: px(31651950, 1200),
+  about: px(31651950, 1200),
+
+  // Top-level aliases reused by product galleries (see gallery.* below).
+  styleMinimal: px(8527592),
+  styleStatement: px(31807113),
+  styleLace: px(36520876),
+  styleVintage: px(8984022),
+  styleTailored: px(37263478),
+  styleEthnic: px(34223631),
+
+  styleEdit: {
+    minimal: px(8527592),
+    statement: px(31807113),
+    lace: px(36520876),
+    vintage: px(8984022),
+    tailored: px(37263478),
+    ethnic: px(34223631),
+  },
+
+  lookbook: {
+    wedding: px(34603145, 1100),
+    evening: px(19344067, 1100),
+    minimal: px(20440142, 1100),
+    ethnic: px(13661847, 1100),
+  },
+
+  categories: {
+    sarees: px(32718396),
+    lehenga: px(29251325),
+    gowns: px(33923432),
+    anarkali: px(29770293),
+    sherwani: px(38141587),
+    suits: px(15442084),
+    tuxedo: px(27028693),
+    party: px(33836119),
+    wedding: px(35963151),
+    traditional: px(38998852),
+  },
+
+  products: {
+    royalIvoryLehenga: px(28210864),
+    midnightBlackGown: px(32100328),
+    emeraldSilkSaree: px(36114637),
+    classicBlackTuxedo: px(35253986),
+    ivoryRoyalSherwani: px(37439727),
+    roseGoldPartyDress: px(31860971),
+    burgundyWeddingSuit: px(32938673),
+    pastelPinkAnarkali: px(7037121),
+    champagneEveningGown: px(34959983),
+    navyTailoredBlazer: px(20440142),
+    pearlWhiteSaree: px(11665190),
+    wineVelvetSherwani: px(5653274),
+    lavenderOrganzaLehenga: px(14950337),
+    forestGreenGown: px(20331526),
+    blackGoldSaree: px(38701455),
+  },
+
+  // Related imagery reused for product galleries (verified IDs).
+  gallery: {
+    catSarees: px(32718396),
+    catLehenga: px(29251325),
+    catGowns: px(33923432),
+    catAnarkali: px(29770293),
+    catSherwani: px(38141587),
+    catSuits: px(15442084),
+    catTuxedo: px(27028693),
+    catParty: px(33836119),
+    catWedding: px(35963151),
+    catTraditional: px(38998852),
+    styleMinimal: px(8527592),
+    styleStatement: px(31807113),
+    styleLace: px(36520876),
+    styleVintage: px(8984022),
+    styleTailored: px(37263478),
+    styleEthnic: px(34223631),
+  },
+}
+
+export const PLACEHOLDER = px(13267025, 900)

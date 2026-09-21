@@ -1,251 +1,144 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { FiUser, FiMail, FiPhone, FiLock, FiCheck } from 'react-icons/fi'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { UserPlus } from 'lucide-react'
+import FormInput from '../../components/common/FormInput'
+import Button from '../../components/common/Button'
+import { validateRegister } from '../../utils/validation'
 import { useAuth } from '../../context/AuthContext'
-import FormInput from '../../components/FormInput'
-import Button from '../../components/Button'
-import { mockUsers } from '../../data/mockData'
+import { useToast } from '../../context/ToastContext'
 
 export default function Register() {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    role: 'customer',
-    agreeToTerms: false,
-  })
-  const [errors, setErrors] = useState({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [apiError, setApiError] = useState('')
-  const { login } = useAuth()
+  const { register } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const redirect = params.get('redirect') || '/'
 
-  const validate = () => {
-    const newErrors = {}
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required'
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email'
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required'
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required'
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
-    }
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password'
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
-    }
-    if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = 'You must agree to the terms and conditions'
-    }
-    return newErrors
-  }
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', password: '', confirmPassword: '' })
+  const [errors, setErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = async (e) => {
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+
+  const submit = async (e) => {
     e.preventDefault()
-    setApiError('')
-    const validationErrors = validate()
-    setErrors(validationErrors)
-
-    if (Object.keys(validationErrors).length > 0) return
-
-    setIsSubmitting(true)
-
-    setTimeout(() => {
-      const exists = mockUsers.find(
-        (u) => u.email.toLowerCase() === formData.email.toLowerCase()
-      )
-
-      if (exists) {
-        setApiError('An account with this email already exists')
-        setIsSubmitting(false)
-        return
-      }
-
-      const newUser = {
-        id: Date.now(),
-        name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        role: formData.role,
-      }
-
-      login(newUser)
-      const roleRoutes = {
-        admin: '/admin',
-        owner: '/owner',
-        customer: '/rentals',
-      }
-      navigate(roleRoutes[newUser.role] || '/rentals', { replace: true })
-      setIsSubmitting(false)
-    }, 800)
-  }
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }))
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }))
+    const validation = validateRegister(form)
+    if (!validation.valid) {
+      setErrors(validation.errors)
+      return
     }
-    setApiError('')
+    setSubmitting(true)
+    setErrors({})
+    try {
+      const user = await register({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone,
+        address: form.address,
+        password: form.password,
+      })
+      toast.success(`Welcome to StyleRent, ${user.name}!`)
+      navigate(user?.role && user.role !== 'USER' ? `/${user.role.toLowerCase()}` : redirect)
+    } catch (err) {
+      setErrors({ server: err.message })
+      toast.error(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-alt py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="card p-8">
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold font-heading text-primary mb-2">
-              <FiUser className="text-accent" />
-              StyleRent
+    <div className="auth-page">
+      <div className="auth-card">
+        <div className="text-center mb-4">
+          <h1 className="auth-title">Create your account</h1>
+          <p className="text-muted-sr small">Start renting designer looks in minutes.</p>
+        </div>
+
+        {errors.server ? (
+          <div className="alert alert-danger small py-2" role="alert">
+            {errors.server}
+          </div>
+        ) : null}
+
+        <form onSubmit={submit} noValidate>
+          <FormInput
+            id="reg-name"
+            label="Full Name"
+            placeholder="Priya Sharma"
+            value={form.name}
+            onChange={set('name')}
+            error={errors.name}
+            autoComplete="name"
+          />
+          <FormInput
+            id="reg-email"
+            label="Email Address"
+            type="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={set('email')}
+            error={errors.email}
+            autoComplete="email"
+          />
+          <div className="row g-2">
+            <div className="col-12 col-sm-5">
+              <FormInput
+                id="reg-phone"
+                label="Phone"
+                type="tel"
+                placeholder="+91 9XXXXXXXXX"
+                value={form.phone}
+                onChange={set('phone')}
+                error={errors.phone}
+                autoComplete="tel"
+              />
+            </div>
+            <div className="col-12 col-sm-7">
+              <FormInput
+                id="reg-address"
+                label="City"
+                placeholder="Mumbai"
+                value={form.address}
+                onChange={set('address')}
+                error={errors.address}
+                autoComplete="address-level2"
+              />
+            </div>
+          </div>
+          <FormInput
+            id="reg-password"
+            label="Password"
+            type="password"
+            placeholder="At least 6 characters"
+            value={form.password}
+            onChange={set('password')}
+            error={errors.password}
+            autoComplete="new-password"
+            hint="Use 6+ characters with a letter and a number."
+          />
+          <FormInput
+            id="reg-confirm"
+            label="Confirm Password"
+            type="password"
+            placeholder="Repeat your password"
+            value={form.confirmPassword}
+            onChange={set('confirmPassword')}
+            error={errors.confirmPassword}
+            autoComplete="new-password"
+          />
+          <Button type="submit" block loading={submitting} icon={UserPlus}>
+            Create Account
+          </Button>
+        </form>
+
+        <div className="text-center mt-3">
+          <span className="text-muted-sr small">
+            Already a member?{' '}
+            <Link to={`/login?redirect=${encodeURIComponent(redirect)}`} className="link-gold fw-semibold">
+              Sign in
             </Link>
-            <h2 className="text-2xl font-bold font-heading">Create Account</h2>
-            <p className="text-text-light mt-1">Join StyleRent today</p>
-          </div>
-
-          {apiError && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
-              {apiError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-            <FormInput
-              label="Full Name"
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="John Doe"
-              error={errors.fullName}
-              required
-            />
-
-            <FormInput
-              label="Email Address"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="you@example.com"
-              error={errors.email}
-              required
-            />
-
-            <FormInput
-              label="Phone Number"
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="+1 (555) 000-0000"
-              error={errors.phone}
-              required
-            />
-
-            <FormInput
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Create a password"
-              error={errors.password}
-              required
-            />
-
-            <FormInput
-              label="Confirm Password"
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm your password"
-              error={errors.confirmPassword}
-              required
-            />
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-text mb-3">I want to</label>
-              <div className="flex gap-4">
-                <label className="flex-1 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="customer"
-                    checked={formData.role === 'customer'}
-                    onChange={handleChange}
-                    className="sr-only peer"
-                  />
-                  <div className="border-2 border-gray-200 peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white rounded-lg p-3 text-center transition-colors">
-                    <span className="font-medium">Rent Clothes</span>
-                    <p className="text-xs opacity-80">Customer</p>
-                  </div>
-                </label>
-                <label className="flex-1 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="owner"
-                    checked={formData.role === 'owner'}
-                    onChange={handleChange}
-                    className="sr-only peer"
-                  />
-                  <div className="border-2 border-gray-200 peer-checked:border-accent peer-checked:bg-accent peer-checked:text-white rounded-lg p-3 text-center transition-colors">
-                    <span className="font-medium">List Items</span>
-                    <p className="text-xs opacity-80">Owner</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="agreeToTerms"
-                  checked={formData.agreeToTerms}
-                  onChange={handleChange}
-                  className={`mt-1 w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent ${errors.agreeToTerms ? 'border-danger' : ''}`}
-                />
-                <span className="text-sm text-text-light">
-                  I agree to the{' '}
-                  <Link to="/terms" className="text-accent hover:underline">Terms of Service</Link>
-                  {' '}and{' '}
-                  <Link to="/privacy" className="text-accent hover:underline">Privacy Policy</Link>
-                </span>
-              </label>
-              {errors.agreeToTerms && (
-                <p className="form-error mt-1">{errors.agreeToTerms}</p>
-              )}
-            </div>
-
-            <Button type="submit" variant="primary" size="lg" loading={isSubmitting} className="w-full">
-              Create Account
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-text-light">
-              Already have an account?{' '}
-              <Link to="/login" className="text-accent font-medium hover:underline">
-                Sign in
-              </Link>
-            </p>
-          </div>
+          </span>
         </div>
       </div>
     </div>
