@@ -10,12 +10,15 @@ import com.stylerent.entity.Clothing;
 import com.stylerent.entity.ClothingSize;
 import com.stylerent.entity.Rental;
 import com.stylerent.entity.RentalItem;
+import com.stylerent.entity.User;
 import com.stylerent.exception.BadRequestException;
 import com.stylerent.exception.ResourceNotFoundException;
 import com.stylerent.repository.CategoryRepository;
 import com.stylerent.repository.ClothingRepository;
 import com.stylerent.repository.ClothingSizeRepository;
 import com.stylerent.repository.RentalItemRepository;
+import com.stylerent.repository.UserRepository;
+import com.stylerent.security.SecurityUtils;
 import com.stylerent.service.ClothingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,13 +48,18 @@ class ClothingServiceTest {
     private ClothingSizeRepository clothingSizeRepository;
     @Mock
     private RentalItemRepository rentalItemRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private SecurityUtils securityUtils;
 
     private ClothingService clothingService;
 
     @BeforeEach
     void setUp() {
         clothingService = new ClothingService(
-                clothingRepository, categoryRepository, clothingSizeRepository, rentalItemRepository);
+                clothingRepository, categoryRepository, clothingSizeRepository,
+                rentalItemRepository, userRepository, securityUtils);
     }
 
     private Clothing sampleClothing() {
@@ -154,6 +162,8 @@ class ClothingServiceTest {
     @Test
     void createPersistsSizes() {
         when(categoryRepository.findById(3L)).thenReturn(Optional.of(sampleClothing().getCategory()));
+        User host = new User("Vastra Studio", "host@stylerent.com", "secret", "9810011004", "Delhi", "HOST");
+        when(securityUtils.currentUser()).thenReturn(host);
         when(clothingRepository.save(any(Clothing.class))).thenAnswer(inv -> {
             Clothing c = inv.getArgument(0);
             c.setClothingId(50L);
@@ -161,8 +171,9 @@ class ClothingServiceTest {
         });
 
         ClothingRequest request = new ClothingRequest(
-                3L, "Test Gown", "Desc", new BigDecimal("200.00"),
-                "img", "Black", 5,
+                3L, null, "Test Gown", "Desc", new BigDecimal("200.00"),
+                new BigDecimal("200.00"), new BigDecimal("340.00"), new BigDecimal("480.00"),
+                new BigDecimal("840.00"), "img", "Black", 5, "WOMEN", true,
                 List.of(new ClothingSizeRequest("M", 3), new ClothingSizeRequest("L", 2)));
 
         ClothingResponse response = clothingService.create(request);
