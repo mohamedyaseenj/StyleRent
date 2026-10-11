@@ -67,7 +67,7 @@ The login screen also offers one-click demo sign-in buttons.
 - My Rentals, rental details, profile editing, and review submission
 
 **Owner**
-- Dashboard stats, clothing inventory management (create/edit/delete), rentals, and revenue
+- Dashboard stats, clothing inventory management (create/edit/delete),rentals, and revenue
 
 **Admin**
 - Platform dashboard, product approvals, categories, rentals, customers, and review moderation
