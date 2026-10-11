@@ -9,7 +9,7 @@ import { rentals } from '../../data/rentals'
 import { formatINR } from '../../utils/priceUtils'
 import { formatDate, parseISO } from '../../utils/dateUtils'
 
-const ROLE_BADGE = { USER: 'status-confirmed', OWNER: 'status-pending', ADMIN: 'status-paid' }
+const ROLE_BADGE = { USER: 'status-confirmed', HOST: 'status-pending', OWNER: 'status-pending', ADMIN: 'status-paid' }
 
 export default function AdminCustomers() {
   const [query, setQuery] = useState('')
@@ -49,7 +49,7 @@ export default function AdminCustomers() {
       </div>
 
       <div className="tab-row mb-3">
-        {['All', 'USER', 'OWNER', 'ADMIN'].map((r) => (
+        {['All', 'USER', 'HOST', 'ADMIN'].map((r) => (
           <button key={r} type="button" className={`tab-chip ${roleFilter === r ? 'active' : ''}`} onClick={() => setRoleFilter(r)}>
             {r}
           </button>

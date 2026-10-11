@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { LogIn, ShieldCheck, UserRound, Store } from 'lucide-react'
-import FormInput from '../../components/common/FormInput'
-import Button from '../../components/common/Button'
+import { Eye, EyeOff, LockKeyhole, LogIn, Mail, ShieldCheck, UserRound, Store } from 'lucide-react'
+import LoginField from '../../components/common/LoginField'
 import { validateLogin } from '../../utils/validation'
 import { useAuth, DEMO_ACCOUNTS } from '../../context/AuthContext'
+import { normalizeRole } from '../../utils/roles'
 import { useToast } from '../../context/ToastContext'
 
-export default function Login() {
+export default function Login({ requiredRole, title, subtitle }) {
   const { login, register } = useAuth() // register used for demo fallback
   const toast = useToast()
   const navigate = useNavigate()
@@ -16,13 +16,22 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [demoBusy, setDemoBusy] = useState(null)
 
   const goHome = (user) => {
-    if (user?.role === 'OWNER') navigate('/owner')
-    else if (user?.role === 'ADMIN') navigate('/admin')
+    const role = normalizeRole(user?.role)
+    if (requiredRole && role !== normalizeRole(requiredRole)) {
+      // Logged in but with the wrong role for this portal — send them to their own home.
+      if (role === 'HOST') navigate('/host/dashboard')
+      else if (role === 'ADMIN') navigate('/admin/dashboard')
+      else navigate('/user/dashboard')
+      return
+    }
+    if (role === 'HOST') navigate('/host/dashboard')
+    else if (role === 'ADMIN') navigate('/admin/dashboard')
     else navigate(redirect)
   }
 
@@ -37,6 +46,11 @@ export default function Login() {
     setErrors({})
     try {
       const user = await login(email.trim(), password)
+      if (requiredRole && normalizeRole(user?.role) !== normalizeRole(requiredRole)) {
+        setErrors({ server: `This portal is for ${requiredRole} accounts. You logged in as ${user?.role}.` })
+        toast.error('This account does not have access to this portal.')
+        return
+      }
       toast.success(`Welcome back, ${user.name}!`)
       goHome(user)
     } catch (err) {
@@ -74,10 +88,10 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className="auth-card login-card">
         <div className="text-center mb-4">
-          <h1 className="auth-title">Welcome back</h1>
-          <p className="text-muted-sr small">Sign in to continue renting.</p>
+          <h1 className="login-title">{title || 'Login'}</h1>
+          <p className="text-muted-sr small">{subtitle || 'Sign in to continue renting.'}</p>
         </div>
 
         {errors.server ? (
@@ -87,29 +101,57 @@ export default function Login() {
         ) : null}
 
         <form onSubmit={submit} noValidate>
-          <FormInput
+          <LoginField
             id="login-email"
-            label="Email Address"
+            label="Email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="daniel21fisher@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             error={errors.email}
             autoComplete="email"
+            icon={<Mail size={18} aria-hidden="true" />}
           />
-          <FormInput
+          <LoginField
             id="login-password"
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             error={errors.password}
             autoComplete="current-password"
+            icon={<LockKeyhole size={18} aria-hidden="true" />}
+            trailing={
+              <button
+                type="button"
+                className="login-eye"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+              </button>
+            }
           />
-          <Button type="submit" block loading={submitting} icon={LogIn}>
-            Sign In
-          </Button>
+          <div className="login-forgot">
+            <button
+              type="button"
+              className="login-forgot-btn"
+              onClick={() => toast.info('Password resets are handled by StyleRent support — please contact us.')}
+            >
+              Forgot Password?
+            </button>
+          </div>
+          <button type="submit" className="btn-login" disabled={submitting}>
+            {submitting ? (
+              'Signing in…'
+            ) : (
+              <>
+                <LogIn size={17} aria-hidden="true" /> Log In
+              </>
+            )}
+          </button>
         </form>
 
         <div className="text-center mt-3">
@@ -126,7 +168,7 @@ export default function Login() {
         </div>
         <div className="row g-2">
           {DEMO_ACCOUNTS.map((acct) => {
-            const Icon = acct.role === 'ADMIN' ? ShieldCheck : acct.role === 'OWNER' ? Store : UserRound
+            const Icon = acct.role === 'ADMIN' ? ShieldCheck : acct.role === 'HOST' ? Store : UserRound
             return (
               <div className="col-4" key={acct.role}>
                 <button

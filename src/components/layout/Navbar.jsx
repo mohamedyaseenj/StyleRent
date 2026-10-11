@@ -87,7 +87,7 @@ export default function Navbar() {
         .slice(0, 6)
     : []
 
-  const roleHome = role === 'OWNER' ? '/owner' : role === 'ADMIN' ? '/admin' : '/profile'
+  const roleHome = role === 'HOST' || role === 'OWNER' ? '/host/dashboard' : role === 'ADMIN' ? '/admin/dashboard' : '/user/dashboard'
 
   const renderAccountArea = () => {
     if (!isAuthenticated) {

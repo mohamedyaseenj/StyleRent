@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { UserPlus } from 'lucide-react'
-import FormInput from '../../components/common/FormInput'
-import Button from '../../components/common/Button'
+import { Eye, EyeOff, LockKeyhole, Mail, MapPin, Phone, UserPlus, UserRound } from 'lucide-react'
+import LoginField from '../../components/common/LoginField'
 import { validateRegister } from '../../utils/validation'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
@@ -17,6 +16,7 @@ export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', password: '', confirmPassword: '' })
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
@@ -49,9 +49,9 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <div className="auth-card">
+      <div className="auth-card login-card">
         <div className="text-center mb-4">
-          <h1 className="auth-title">Create your account</h1>
+          <h1 className="login-title">Create your account</h1>
           <p className="text-muted-sr small">Start renting designer looks in minutes.</p>
         </div>
 
@@ -62,7 +62,7 @@ export default function Register() {
         ) : null}
 
         <form onSubmit={submit} noValidate>
-          <FormInput
+          <LoginField
             id="reg-name"
             label="Full Name"
             placeholder="Priya Sharma"
@@ -70,20 +70,22 @@ export default function Register() {
             onChange={set('name')}
             error={errors.name}
             autoComplete="name"
+            icon={<UserRound size={18} aria-hidden="true" />}
           />
-          <FormInput
+          <LoginField
             id="reg-email"
-            label="Email Address"
+            label="Email"
             type="email"
             placeholder="you@example.com"
             value={form.email}
             onChange={set('email')}
             error={errors.email}
             autoComplete="email"
+            icon={<Mail size={18} aria-hidden="true" />}
           />
           <div className="row g-2">
             <div className="col-12 col-sm-5">
-              <FormInput
+              <LoginField
                 id="reg-phone"
                 label="Phone"
                 type="tel"
@@ -92,10 +94,11 @@ export default function Register() {
                 onChange={set('phone')}
                 error={errors.phone}
                 autoComplete="tel"
+                icon={<Phone size={18} aria-hidden="true" />}
               />
             </div>
             <div className="col-12 col-sm-7">
-              <FormInput
+              <LoginField
                 id="reg-address"
                 label="City"
                 placeholder="Mumbai"
@@ -103,33 +106,52 @@ export default function Register() {
                 onChange={set('address')}
                 error={errors.address}
                 autoComplete="address-level2"
+                icon={<MapPin size={18} aria-hidden="true" />}
               />
             </div>
           </div>
-          <FormInput
+          <LoginField
             id="reg-password"
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="At least 6 characters"
             value={form.password}
             onChange={set('password')}
             error={errors.password}
             autoComplete="new-password"
-            hint="Use 6+ characters with a letter and a number."
+            icon={<LockKeyhole size={18} aria-hidden="true" />}
+            trailing={
+              <button
+                type="button"
+                className="login-eye"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+              </button>
+            }
           />
-          <FormInput
+          <LoginField
             id="reg-confirm"
             label="Confirm Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="Repeat your password"
             value={form.confirmPassword}
             onChange={set('confirmPassword')}
             error={errors.confirmPassword}
             autoComplete="new-password"
+            icon={<LockKeyhole size={18} aria-hidden="true" />}
           />
-          <Button type="submit" block loading={submitting} icon={UserPlus}>
-            Create Account
-          </Button>
+          <button type="submit" className="btn-login" disabled={submitting}>
+            {submitting ? (
+              'Creating account…'
+            ) : (
+              <>
+                <UserPlus size={17} aria-hidden="true" /> Create Account
+              </>
+            )}
+          </button>
         </form>
 
         <div className="text-center mt-3">

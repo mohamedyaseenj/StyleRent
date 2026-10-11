@@ -3,25 +3,27 @@ import { LayoutDashboard, Shirt, CalendarCheck2, Wallet, LogOut, Users, Star } f
 import { useAuth } from '../../context/AuthContext'
 
 const OWNER_LINKS = [
-  { label: 'Overview', to: '/owner', icon: LayoutDashboard, end: true },
-  { label: 'My Clothing', to: '/owner/clothing', icon: Shirt },
-  { label: 'Rentals', to: '/owner/rentals', icon: CalendarCheck2 },
-  { label: 'Revenue', to: '/owner/revenue', icon: Wallet },
+  { label: 'Overview', to: '/host/dashboard', icon: LayoutDashboard, end: true },
+  { label: 'My Clothing', to: '/host/clothing', icon: Shirt },
+  { label: 'Rentals', to: '/host/rentals', icon: CalendarCheck2 },
+  { label: 'Revenue', to: '/host/revenue', icon: Wallet },
 ]
 
 const ADMIN_LINKS = [
-  { label: 'Overview', to: '/admin', icon: LayoutDashboard, end: true },
-  { label: 'Products', to: '/admin/products', icon: Shirt },
+  { label: 'Overview', to: '/admin/dashboard', icon: LayoutDashboard, end: true },
+  { label: 'Clothing', to: '/admin/clothing', icon: Shirt },
   { label: 'Categories', to: '/admin/categories', icon: LayoutDashboard },
   { label: 'Rentals', to: '/admin/rentals', icon: CalendarCheck2 },
-  { label: 'Customers', to: '/admin/customers', icon: Users },
+  { label: 'Users', to: '/admin/users', icon: Users },
+  { label: 'Hosts', to: '/admin/hosts', icon: Users },
+  { label: 'Payments', to: '/admin/payments', icon: Wallet },
   { label: 'Reviews', to: '/admin/reviews', icon: Star },
 ]
 
-export default function DashboardShell({ kind = 'owner', title, subtitle }) {
+export default function DashboardShell({ kind = 'host', title, subtitle }) {
   const { user, logout } = useAuth()
   const links = kind === 'admin' ? ADMIN_LINKS : OWNER_LINKS
-  const accent = kind === 'admin' ? 'Admin' : 'Owner'
+  const accent = kind === 'admin' ? 'Admin' : 'Host'
 
   return (
     <div className="dash-shell container-fluid px-0">

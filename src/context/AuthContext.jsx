@@ -1,6 +1,9 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { authAPI } from '../services/api'
 import { getDemoUserByEmail } from '../data/users'
+import { normalizeRole, isHostRole } from '../utils/roles'
+
+export { normalizeRole, isHostRole }
 
 const AuthContext = createContext(null)
 
@@ -22,11 +25,15 @@ export const useAuth = () => {
 }
 
 // Demo quick-login profiles surfaced on the Login page.
+// Canonical roles: USER (customer), HOST (clothing provider), ADMIN.
 export const DEMO_ACCOUNTS = [
   { label: 'Customer', email: 'customer@stylerent.com', password: 'customer123', role: 'USER' },
-  { label: 'Boutique Owner', email: 'owner@stylerent.com', password: 'owner123', role: 'OWNER' },
+  { label: 'Host', email: 'host@stylerent.com', password: 'host123', role: 'HOST' },
   { label: 'Administrator', email: 'admin@stylerent.com', password: 'admin123', role: 'ADMIN' },
 ]
+
+// Backend canonical role is HOST; 'OWNER' is kept as a legacy frontend alias
+// (helpers live in utils/roles.js and are re-exported here for compatibility).
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(loadSession)
@@ -46,6 +53,8 @@ export function AuthProvider({ children }) {
     setLoading(true)
     try {
       const result = await authAPI.login(email, password)
+      // Normalize legacy OWNER role to canonical HOST.
+      if (result?.user) result.user = { ...result.user, role: normalizeRole(result.user.role) }
       persistSession(result)
       return result.user
     } finally {
@@ -63,6 +72,7 @@ export function AuthProvider({ children }) {
     setLoading(true)
     try {
       const result = await authAPI.register(payload)
+      if (result?.user) result.user = { ...result.user, role: normalizeRole(result.user.role) }
       persistSession(result)
       return result.user
     } finally {
@@ -88,7 +98,7 @@ export function AuthProvider({ children }) {
       user: session?.user || null,
       token: session?.token || null,
       isAuthenticated: !!session?.user,
-      role: session?.user?.role || null,
+      role: normalizeRole(session?.user?.role || null),
       loading,
       login,
       loginAsDemo,
@@ -96,8 +106,9 @@ export function AuthProvider({ children }) {
       logout,
       updateProfile,
       // Convenience helpers
-      isUser: session?.user?.role === 'USER',
-      isOwner: session?.user?.role === 'OWNER',
+      isUser: normalizeRole(session?.user?.role) === 'USER',
+      isHost: isHostRole(session?.user?.role),
+      isOwner: isHostRole(session?.user?.role),
       isAdmin: session?.user?.role === 'ADMIN',
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

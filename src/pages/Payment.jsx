@@ -42,7 +42,7 @@ export default function Payment() {
       .then(([r, p]) => {
         if (!active) return
         setRental(r)
-        setPayment(p)
+        setPayment(Array.isArray(p) ? p[0] || null : p || null)
       })
       .catch(() => active && setError('We could not find this booking.'))
       .finally(() => active && setLoading(false))

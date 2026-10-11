@@ -75,6 +75,48 @@ export const categories = [
     image_url: px(38998852),
     featured: false,
   },
+  {
+    category_id: 11,
+    category_name: "Men's Casuals",
+    description: 'Everyday menswear — tees, jeans and formal shirts for daily rotation.',
+    image_url: px(37263478),
+    featured: true,
+  },
+  {
+    category_id: 12,
+    category_name: "Men's Winterwear",
+    description: 'Cosy layers — pullover hoodies, zip-ups and crewneck sweatshirts.',
+    image_url: px(8527592),
+    featured: false,
+  },
+  {
+    category_id: 13,
+    category_name: 'Kids Essentials',
+    description: 'Comfort-first kids wear — tees, joggers, denim, nightsuits and light jackets.',
+    image_url: px(33836119),
+    featured: true,
+  },
+  {
+    category_id: 14,
+    category_name: 'Onelie Everyday',
+    description: 'Contemporary everyday womenswear — Onelie Basics, Aura, Bloom and Breeze.',
+    image_url: px(34223631),
+    featured: true,
+  },
+  {
+    category_id: 15,
+    category_name: 'Onelie Heritage',
+    description: 'Traditional handloom and heritage weaves — Heritage, Kriti, Riwaayat and Sutra.',
+    image_url: px(36114637),
+    featured: true,
+  },
+  {
+    category_id: 16,
+    category_name: 'Onelie Festive',
+    description: 'Festive and occasion wear — Onelie Festive and Onelie Utsav edits.',
+    image_url: px(34603145),
+    featured: true,
+  },
 ]
 
 export const getCategoryById = (id) =>

@@ -64,7 +64,7 @@ export default function OwnerDashboard() {
           <div className="card-sr p-3 p-md-4">
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h5 className="mb-0">Recent Rentals</h5>
-              <Link to="/owner/rentals" className="link-gold small d-flex align-items-center gap-1">
+              <Link to="/host/rentals" className="link-gold small d-flex align-items-center gap-1">
                 View all <ArrowRight size={13} aria-hidden="true" />
               </Link>
             </div>
@@ -109,10 +109,10 @@ export default function OwnerDashboard() {
 
           <div className="card-sr p-3 p-md-4">
             <h5 className="mb-3">Quick Actions</h5>
-            <Link to="/owner/clothing" className="btn btn-sr-primary btn-sr-block btn-sr-sm mb-2 d-flex align-items-center justify-content-center gap-2">
+            <Link to="/host/clothing" className="btn btn-sr-primary btn-sr-block btn-sr-sm mb-2 d-flex align-items-center justify-content-center gap-2">
               <Plus size={15} aria-hidden="true" /> Add New Listing
             </Link>
-            <Link to="/owner/rentals" className="btn btn-sr-outline btn-sr-block btn-sr-sm">
+            <Link to="/host/rentals" className="btn btn-sr-outline btn-sr-block btn-sr-sm">
               Manage Rentals
             </Link>
           </div>

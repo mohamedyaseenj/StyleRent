@@ -9,6 +9,7 @@ import SmartImage from '../common/SmartImage'
 import { SearchInput } from '../common/SearchBar'
 import { products as seedProducts } from '../../data/products'
 import { categories } from '../../data/categories'
+import { clothingAPI } from '../../services/api'
 import { useToast } from '../../context/ToastContext'
 import { validateClothingForm } from '../../utils/validation'
 import { formatINR } from '../../utils/priceUtils'
@@ -27,7 +28,7 @@ const EMPTY = {
 // Shared catalogue manager used by both the Owner and Admin consoles.
 export default function ClothingManager({ title = 'Clothing', subtitle }) {
   const toast = useToast()
-  const [list, setList] = useState(seedProducts)
+  const [list, setList] = useState(() => [...seedProducts])
   const [query, setQuery] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
@@ -58,7 +59,7 @@ export default function ClothingManager({ title = 'Clothing', subtitle }) {
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
 
-  const save = (e) => {
+  const save = async (e) => {
     e.preventDefault()
     const validation = validateClothingForm(form)
     if (!validation.valid) {
@@ -66,48 +67,50 @@ export default function ClothingManager({ title = 'Clothing', subtitle }) {
       return
     }
     setSaving(true)
-    setTimeout(() => {
-      setList((prev) => {
-        if (form.clothing_id) {
-          return prev.map((p) =>
-            p.clothing_id === form.clothing_id
-              ? {
-                  ...p,
-                  ...form,
-                  category_id: Number(form.category_id),
-                  price_per_day: Number(form.price_per_day),
-                  stock: Number(form.stock),
-                }
-              : p,
-          )
-        }
-        const nextId = Math.max(...prev.map((p) => p.clothing_id)) + 1
-        return [
-          {
-            ...form,
-            clothing_id: nextId,
-            category_id: Number(form.category_id),
-            price_per_day: Number(form.price_per_day),
-            stock: Number(form.stock),
-            availableSizes: ['S', 'M', 'L'],
-            rating: 5,
-            reviewCount: 0,
-            tags: ['NEW'],
-            start_date: new Date().toISOString().slice(0, 10),
-          },
-          ...prev,
-        ]
-      })
-      setSaving(false)
+    try {
+      const payload = {
+        name: String(form.name).trim(),
+        categoryId: Number(form.category_id),
+        category_id: Number(form.category_id),
+        pricePerDay: Number(form.price_per_day),
+        price_per_day: Number(form.price_per_day),
+        stock: Number(form.stock),
+        color: form.color,
+        imageUrl: form.image_url,
+        image_url: form.image_url,
+        description: form.description || '',
+      }
+      if (form.clothing_id) {
+        const updated = await clothingAPI.update(form.clothing_id, payload)
+        setList((prev) =>
+          prev.map((p) =>
+            p.clothing_id === form.clothing_id ? { ...p, ...updated } : p,
+          ),
+        )
+        toast.success('Listing updated.')
+      } else {
+        const created = await clothingAPI.create(payload)
+        setList((prev) => [created, ...prev])
+        toast.success('Listing added.')
+      }
       setModalOpen(false)
-      toast.success(form.clothing_id ? 'Listing updated.' : 'Listing added.')
-    }, 400)
+    } catch (err) {
+      toast.error(err?.message || 'Could not save the listing.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const confirmDelete = () => {
-    setList((prev) => prev.filter((p) => p.clothing_id !== destroyId))
-    toast.info('Listing removed.')
-    setDestroyId(null)
+  const confirmDelete = async () => {
+    try {
+      await clothingAPI.remove(destroyId)
+      setList((prev) => prev.filter((p) => p.clothing_id !== destroyId))
+      toast.info('Listing removed.')
+    } catch (err) {
+      toast.error(err?.message || 'Could not remove the listing.')
+    } finally {
+      setDestroyId(null)
+    }
   }
 
   return (

@@ -29,10 +29,11 @@ export default function AdminDashboard() {
     .slice(0, 6)
 
   const quickLinks = [
-    { to: '/admin/products', label: 'Manage Products', icon: Shirt },
+    { to: '/admin/clothing', label: 'Manage Clothing', icon: Shirt },
     { to: '/admin/categories', label: 'Manage Categories', icon: LayoutGrid },
     { to: '/admin/rentals', label: 'All Rentals', icon: CalendarCheck2 },
-    { to: '/admin/customers', label: 'Customers', icon: Users },
+    { to: '/admin/users', label: 'Users', icon: Users },
+    { to: '/admin/payments', label: 'Payments', icon: CalendarCheck2 },
     { to: '/admin/reviews', label: 'Review Moderation', icon: Star },
   ]
 

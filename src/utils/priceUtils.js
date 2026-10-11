@@ -20,14 +20,23 @@ export const toNumber = (value) => {
   return Number.isFinite(n) ? n : 0
 }
 
-// rentalDays = endDate - startDate (exclusive, minimum 1 when valid)
-export const calcRentalDays = (startISO, endISO) =>
-  startISO && endISO ? Math.max(0, daysBetween(startISO, endISO)) : 0
+// rentalDays from two dates (minimum 1 when end >= start, 0 when missing).
+export const calcRentalDays = (startISO, endISO) => {
+  if (!startISO || !endISO) return 0
+  const days = daysBetween(startISO, endISO)
+  return days >= 1 ? days : 0
+}
 
-// totalAmount = pricePerDay x rentalDays x quantity
-export const calcRentalTotal = (startISO, endISO, pricePerDay, quantity) => {
-  const days = calcRentalDays(startISO, endISO)
-  return toNumber(pricePerDay) * days * Math.max(1, toNumber(quantity))
+// totalAmount = pricePerDay x rentalDays x quantity.
+// Supports BOTH call shapes used across the app:
+//   calcRentalTotal(pricePerDay, days, quantity)   (clothing/booking UI)
+//   calcRentalTotal(startISO, endISO, pricePerDay, quantity) (date-based)
+export const calcRentalTotal = (a, b, c, d) => {
+  if (d !== undefined || (typeof a === 'string' && typeof b === 'string')) {
+    const days = calcRentalDays(a, b)
+    return toNumber(c) * days * Math.max(1, toNumber(d ?? 1))
+  }
+  return toNumber(a) * Math.max(0, toNumber(b)) * Math.max(1, toNumber(c ?? 1))
 }
 
 export const pricePerDayLabel = (pricePerDay) => `${formatINR(pricePerDay)}/day`

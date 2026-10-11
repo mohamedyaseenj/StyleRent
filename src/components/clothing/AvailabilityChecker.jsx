@@ -18,7 +18,7 @@ export default function AvailabilityChecker({ product, startDate, endDate }) {
     setState({ loading: true, available: null, unavailable: null })
     try {
       const days = daysBetween(parseISO(startDate), parseISO(endDate))
-      const res = await clothingAPI.checkAvailability(product.clothing_id, startDate, endDate)
+      const res = await clothingAPI.checkAvailability(product.clothing_id, { startDate, endDate })
       setState({
         loading: false,
         available: res.available ? res : null,

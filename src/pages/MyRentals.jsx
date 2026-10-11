@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { PackageOpen, CalendarRange, Eye, Star, XCircle } from 'lucide-react'
 import Breadcrumbs from '../components/common/SearchBar'
 import StatusBadge from '../components/common/StatusBadge'
-import { LoadingSpinner, EmptyState } from '../components/common/States'
+import { LoadingSpinner, EmptyState, ErrorMessage } from '../components/common/States'
 import { rentalAPI } from '../services/api'
 import { getProductById } from '../data/products'
 import { useAuth } from '../context/AuthContext'
@@ -18,15 +18,18 @@ export default function MyRentals() {
   const toast = useToast()
   const [rentals, setRentals] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [tab, setTab] = useState('All')
   const [cancelled, setCancelled] = useState([])
 
   useEffect(() => {
     let active = true
     setLoading(true)
+    setError(null)
     rentalAPI
       .getMyRentals(user?.user_id)
       .then((list) => active && setRentals(list))
+      .catch(() => active && setError('Could not load your rentals. Please try again.'))
       .finally(() => active && setLoading(false))
     return () => {
       active = false
@@ -44,9 +47,17 @@ export default function MyRentals() {
 
   const filtered = tab === 'All' ? rows : rows.filter((r) => r.status === tab)
 
-  const cancel = (id) => {
-    setCancelled((prev) => [...prev, id])
-    toast.info('Cancellation requested. Refunds process in 3–5 days.')
+  const cancel = async (id) => {
+    try {
+      await rentalAPI.cancel(id)
+      setRentals((prev) =>
+        prev.map((r) => (r.rental_id === id ? { ...r, status: 'Cancelled' } : r)),
+      )
+      setCancelled((prev) => (prev.includes(id) ? prev : [...prev, id]))
+      toast.info('Cancellation requested. Refunds process in 3–5 days.')
+    } catch (err) {
+      toast.error(err?.message || 'Could not cancel this booking. Please try again.')
+    }
   }
 
   return (
@@ -78,6 +89,8 @@ export default function MyRentals() {
 
       {loading ? (
         <LoadingSpinner />
+      ) : error && rows.length === 0 ? (
+        <ErrorMessage message={error} />
       ) : filtered.length === 0 ? (
         <EmptyState
           title={`No ${tab === 'All' ? '' : tab.toLowerCase()} rentals`}

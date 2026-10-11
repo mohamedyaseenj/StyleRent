@@ -24,15 +24,27 @@ export default function Clothing() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Initial filter state from URL (?q= and ?trending=1).
+  // Initial filter state from URL (?q=, ?gender= and ?trending=1).
   const initial = useMemo(() => ({
     ...DEFAULT_STATE,
     query: params.get('q') || '',
+    gender: params.get('gender') || null,
     trending: params.get('trending') === '1',
   }), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [state, setState] = useState(initial)
   const [mobileFilters, setMobileFilters] = useState(false)
+
+  // Keep Men / Women / Kids landing links (?gender=) in sync with filter state.
+  useEffect(() => {
+    const g = params.get('gender')
+    const q = params.get('q') || ''
+    const trending = params.get('trending') === '1'
+    setState((s) => {
+      if (s.gender === g && s.query === q && s.trending === trending) return s
+      return { ...s, gender: g, query: q, trending }
+    })
+  }, [params])
 
   useEffect(() => {
     let active = true

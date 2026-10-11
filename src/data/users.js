@@ -1,6 +1,6 @@
 // USER entity (ER alignment): user_id, name, email, password, phone, address,
 // role, created_at
-// Role values: USER | OWNER | ADMIN
+// Role values: USER | HOST | ADMIN  ('OWNER' accepted as legacy alias of HOST)
 //
 // NOTE: `password` exists ONLY inside this demo dataset so mock login can work.
 // It is never written to localStorage and must never be used in production —
@@ -24,7 +24,17 @@ export const users = [
     password: 'owner123',
     phone: '+91 98100 45678',
     address: 'The Ivory Atelier, 5th Cross, Bandra West, Mumbai, Maharashtra 400050',
-    role: 'OWNER',
+    role: 'HOST',
+    created_at: '2026-01-12T09:00:00.000Z',
+  },
+  {
+    user_id: 6,
+    name: 'Rohan Kapoor (Host)',
+    email: 'host@stylerent.com',
+    password: 'host123',
+    phone: '+91 98100 45678',
+    address: 'The Ivory Atelier, 5th Cross, Bandra West, Mumbai, Maharashtra 400050',
+    role: 'HOST',
     created_at: '2026-01-12T09:00:00.000Z',
   },
   {
