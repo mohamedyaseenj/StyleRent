@@ -2,7 +2,7 @@ package com.stylerent.dto;
 
 import java.math.BigDecimal;
 
-public record OwnerDashboardResponse(
+public record HostDashboardResponse(
         long totalClothing,
         long totalRentals,
         BigDecimal totalRevenue,

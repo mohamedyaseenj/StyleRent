@@ -30,6 +30,10 @@ public class Clothing {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "host_id", nullable = false)
+    private User host;
+
     @Column(name = "name", nullable = false, length = 150)
     private String name;
 
@@ -39,6 +43,18 @@ public class Clothing {
     @Column(name = "price_per_day", nullable = false, precision = 10, scale = 2)
     private BigDecimal pricePerDay;
 
+    @Column(name = "price_1_day", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price1Day;
+
+    @Column(name = "price_2_day", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price2Day;
+
+    @Column(name = "price_3_day", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price3Day;
+
+    @Column(name = "price_1_week", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price1Week;
+
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
@@ -47,6 +63,12 @@ public class Clothing {
 
     @Column(name = "stock", nullable = false)
     private Integer stock;
+
+    @Column(name = "gender", nullable = false, length = 10)
+    private String gender;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean active = true;
 
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -76,6 +98,14 @@ public class Clothing {
         this.category = category;
     }
 
+    public User getHost() {
+        return host;
+    }
+
+    public void setHost(User host) {
+        this.host = host;
+    }
+
     public String getName() {
         return name;
     }
@@ -100,6 +130,38 @@ public class Clothing {
         this.pricePerDay = pricePerDay;
     }
 
+    public BigDecimal getPrice1Day() {
+        return price1Day;
+    }
+
+    public void setPrice1Day(BigDecimal price1Day) {
+        this.price1Day = price1Day;
+    }
+
+    public BigDecimal getPrice2Day() {
+        return price2Day;
+    }
+
+    public void setPrice2Day(BigDecimal price2Day) {
+        this.price2Day = price2Day;
+    }
+
+    public BigDecimal getPrice3Day() {
+        return price3Day;
+    }
+
+    public void setPrice3Day(BigDecimal price3Day) {
+        this.price3Day = price3Day;
+    }
+
+    public BigDecimal getPrice1Week() {
+        return price1Week;
+    }
+
+    public void setPrice1Week(BigDecimal price1Week) {
+        this.price1Week = price1Week;
+    }
+
     public String getImageUrl() {
         return imageUrl;
     }
@@ -122,6 +184,22 @@ public class Clothing {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
     public LocalDateTime getCreatedAt() {

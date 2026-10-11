@@ -41,7 +41,7 @@ class ApiIntegrationTest {
 
         mockMvc.perform(get("/api/clothing"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(15));
+                .andExpect(jsonPath("$.data.length()").value(17));
 
         mockMvc.perform(get("/api/clothing/1"))
                 .andExpect(status().isOk())
@@ -57,7 +57,7 @@ class ApiIntegrationTest {
     void searchAndAvailabilityEndpointsWork() throws Exception {
         mockMvc.perform(get("/api/clothing/search").param("name", "sherwani"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2));
+                .andExpect(jsonPath("$.data.length()").value(3));
 
         mockMvc.perform(get("/api/clothing/1/availability")
                         .param("startDate", "2027-06-01")
@@ -99,29 +99,29 @@ class ApiIntegrationTest {
     }
 
     @Test
-    void roleGuardsProtectAdminAndOwnerEndpoints() throws Exception {
+    void roleGuardsProtectAdminAndHostEndpoints() throws Exception {
         String userToken = login("customer@stylerent.com", "customer123");
 
         mockMvc.perform(get("/api/admin/dashboard").header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isForbidden());
 
-        mockMvc.perform(get("/api/owner/dashboard").header("Authorization", "Bearer " + userToken))
+        mockMvc.perform(get("/api/host/dashboard").header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void adminAndOwnerDashboardsRespond() throws Exception {
+    void adminAndHostDashboardsRespond() throws Exception {
         String adminToken = login("admin@stylerent.com", "admin123");
         mockMvc.perform(get("/api/admin/dashboard").header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalUsers").value(5))
-                .andExpect(jsonPath("$.data.totalClothing").value(15))
+                .andExpect(jsonPath("$.data.totalClothing").value(17))
                 .andExpect(jsonPath("$.data.totalRentals").value(6));
 
-        String ownerToken = login("owner@stylerent.com", "owner123");
-        mockMvc.perform(get("/api/owner/dashboard").header("Authorization", "Bearer " + ownerToken))
+        String hostToken = login("host@stylerent.com", "host123");
+        mockMvc.perform(get("/api/host/dashboard").header("Authorization", "Bearer " + hostToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalClothing").value(15));
+                .andExpect(jsonPath("$.data.totalClothing").value(17));
     }
 
     @Test
@@ -140,9 +140,9 @@ class ApiIntegrationTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.status").value("Pending"))
-                .andExpect(jsonPath("$.data.totalAmount").value(13200.00))
+                .andExpect(jsonPath("$.data.totalAmount").value(10560.00))
                 .andExpect(jsonPath("$.data.items.length()").value(1))
-                .andExpect(jsonPath("$.data.items[0].subtotal").value(13200.00))
+                .andExpect(jsonPath("$.data.items[0].subtotal").value(10560.00))
                 .andReturn();
 
         long rentalId = objectMapper.readTree(rentalResult.getResponse().getContentAsString())
@@ -153,7 +153,7 @@ class ApiIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"rentalId": %d, "amount": 13200.00, "paymentMethod": "UPI"}
+                                {"rentalId": %d, "amount": 10560.00, "paymentMethod": "UPI"}
                                 """.formatted(rentalId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.paymentStatus").value("Paid"))
@@ -174,7 +174,7 @@ class ApiIntegrationTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"rentalId": %d, "amount": 13200.00, "paymentMethod": "Card"}
+                                {"rentalId": %d, "amount": 10560.00, "paymentMethod": "Card"}
                                 """.formatted(rentalId)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("already been paid")));

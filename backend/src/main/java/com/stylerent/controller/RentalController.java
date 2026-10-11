@@ -59,12 +59,24 @@ public class RentalController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','OWNER')")
-    @Operation(summary = "Update a rental status (admin/owner only)")
+    @PreAuthorize("hasAnyRole('ADMIN','HOST')")
+    @Operation(summary = "Update a rental status (admin/host only)")
     public ResponseEntity<ApiResponse<RentalResponse>> updateStatus(@PathVariable Long id,
                                                                     @Valid @RequestBody RentalStatusRequest request) {
         return ResponseEntity.ok(ApiResponse.ok("Rental status updated",
                 rentalService.updateStatus(id, request.status())));
+    }
+
+    @PostMapping("/{id}/cancel")
+    @Operation(summary = "Cancel a rental (owner or admin)")
+    public ResponseEntity<ApiResponse<RentalResponse>> cancel(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Rental cancelled", rentalService.cancel(id)));
+    }
+
+    @PutMapping("/{id}/cancel")
+    @Operation(summary = "Cancel a rental via PUT (spec: PUT /api/rentals/{id}/cancel)")
+    public ResponseEntity<ApiResponse<RentalResponse>> cancelViaPut(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Rental cancelled", rentalService.cancel(id)));
     }
 
     @PostMapping("/{id}/items")

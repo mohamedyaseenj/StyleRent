@@ -81,24 +81,24 @@ public class ClothingController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','OWNER')")
-    @Operation(summary = "Create a clothing item (admin/owner only)")
+    @PreAuthorize("hasAnyRole('ADMIN','HOST')")
+    @Operation(summary = "Create a clothing item (admin/host only)")
     public ResponseEntity<ApiResponse<ClothingResponse>> create(@Valid @RequestBody ClothingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("Clothing created", clothingService.create(request)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','OWNER')")
-    @Operation(summary = "Update a clothing item (admin/owner only)")
+    @PreAuthorize("hasAnyRole('ADMIN','HOST')")
+    @Operation(summary = "Update a clothing item (admin/host only)")
     public ResponseEntity<ApiResponse<ClothingResponse>> update(@PathVariable Long id,
                                                                 @Valid @RequestBody ClothingRequest request) {
         return ResponseEntity.ok(ApiResponse.ok("Clothing updated", clothingService.update(id, request)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','OWNER')")
-    @Operation(summary = "Delete a clothing item (admin/owner only)")
+    @PreAuthorize("hasAnyRole('ADMIN','HOST')")
+    @Operation(summary = "Delete a clothing item (admin/host only)")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         clothingService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok("Clothing deleted"));

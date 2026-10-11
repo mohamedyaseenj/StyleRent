@@ -14,12 +14,14 @@ public interface RentalItemRepository extends JpaRepository<RentalItem, Long> {
 
     List<RentalItem> findByRental_RentalIdOrderByRentalItemIdAsc(Long rentalId);
 
+    List<RentalItem> findByClothing_Host_UserIdOrderByRentalItemIdAsc(Long hostId);
+
     /**
      * Finds rental items for the given clothing that overlap the requested
      * date window for rentals still occupying stock (Pending / Confirmed / Active).
      * Overlap rule: existing.start &lt; requested.end AND existing.end &gt; requested.start.
      */
-    @Query("SELECT ri FROM RentalItem ri WHERE ri.clothing.id = :clothingId " +
+    @Query("SELECT ri FROM RentalItem ri WHERE ri.clothing.clothingId = :clothingId " +
             "AND ri.rental.status IN ('Pending', 'Confirmed', 'Active') " +
             "AND ri.rental.startDate < :endDate AND ri.rental.endDate > :startDate")
     List<RentalItem> findOverlappingActiveItems(

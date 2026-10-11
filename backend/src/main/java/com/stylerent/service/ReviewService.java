@@ -51,6 +51,20 @@ public class ReviewService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> listByUser(Long userId) {
+        return reviewRepository.findByUser_UserIdOrderByCreatedAtDesc(userId).stream()
+                .map(ReviewResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> listAll() {
+        return reviewRepository.findAll().stream()
+                .map(ReviewResponse::from)
+                .toList();
+    }
+
     @Transactional
     public ReviewResponse update(Long id, ReviewRequest request) {
         Review review = findReview(id);

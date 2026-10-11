@@ -24,10 +24,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class RentalService {
+
+    private static final List<String> CANCELLABLE_STATUSES = List.of("Pending", "Confirmed");
 
     private final RentalRepository rentalRepository;
     private final RentalItemRepository rentalItemRepository;
@@ -73,8 +79,9 @@ public class RentalService {
             RentalItem rentalItem = new RentalItem();
             rentalItem.setRental(savedRental);
             rentalItem.setClothing(item.clothing());
+            rentalItem.setSize(item.size());
             rentalItem.setQuantity(item.quantity());
-            rentalItem.setPricePerDay(item.clothing().getPricePerDay());
+            rentalItem.setPricePerDay(item.rate());
             rentalItem.setRentalDays(rentalDays);
             rentalItem.setSubtotal(item.subtotal());
             rentalItemRepository.save(rentalItem);
@@ -101,8 +108,9 @@ public class RentalService {
             RentalItem rentalItem = new RentalItem();
             rentalItem.setRental(rental);
             rentalItem.setClothing(item.clothing());
+            rentalItem.setSize(item.size());
             rentalItem.setQuantity(item.quantity());
-            rentalItem.setPricePerDay(item.clothing().getPricePerDay());
+            rentalItem.setPricePerDay(item.rate());
             rentalItem.setRentalDays(rentalDays);
             rentalItem.setSubtotal(item.subtotal());
             rentalItemRepository.save(rentalItem);
@@ -111,6 +119,23 @@ public class RentalService {
         }
 
         rental.setTotalAmount(rental.getTotalAmount().add(added));
+        return toResponse(rentalRepository.save(rental));
+    }
+
+    @Transactional
+    public RentalResponse cancel(Long id) {
+        Rental rental = findRental(id);
+        User user = securityUtils.currentUser();
+        boolean owner = rental.getUser().getUserId().equals(user.getUserId());
+        boolean admin = "ADMIN".equals(user.getRole());
+        if (!owner && !admin) {
+            throw new UnauthorizedException("You can only cancel your own rentals");
+        }
+        if (!CANCELLABLE_STATUSES.contains(rental.getStatus())) {
+            throw new BadRequestException("Only Pending or Confirmed rentals can be cancelled");
+        }
+        rental.setStatus("Cancelled");
+        restoreStock(rental);
         return toResponse(rentalRepository.save(rental));
     }
 
@@ -137,6 +162,21 @@ public class RentalService {
     }
 
     @Transactional(readOnly = true)
+    public List<RentalResponse> listByHost() {
+        Long hostId = securityUtils.currentUserId();
+        Set<Long> rentalIds = new LinkedHashSet<>();
+        rentalItemRepository.findByClothing_Host_UserIdOrderByRentalItemIdAsc(hostId)
+                .forEach(item -> rentalIds.add(item.getRental().getRentalId()));
+        return rentalIds.stream()
+                .map(rentalRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparing(Rental::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<RentalResponse> listAll() {
         return rentalRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::toResponse)
@@ -146,6 +186,9 @@ public class RentalService {
     @Transactional
     public RentalResponse updateStatus(Long id, String status) {
         Rental rental = findRental(id);
+        if (!List.of("Pending", "Confirmed", "Active", "Completed", "Cancelled").contains(status)) {
+            throw new BadRequestException("Invalid rental status: " + status);
+        }
         rental.setStatus(status);
         return toResponse(rentalRepository.save(rental));
     }
@@ -175,10 +218,25 @@ public class RentalService {
                             + " (size " + itemRequest.size() + ") on the selected dates. Available: " + available);
         }
 
-        BigDecimal subtotal = clothing.getPricePerDay()
-                .multiply(BigDecimal.valueOf(rentalDays))
-                .multiply(BigDecimal.valueOf(itemRequest.quantity()));
-        return new PreparedItem(clothing, itemRequest.size(), itemRequest.quantity(), subtotal, reserved);
+        BigDecimal rate = tierRate(clothing, rentalDays);
+        BigDecimal subtotal = rate.multiply(BigDecimal.valueOf(itemRequest.quantity()));
+        return new PreparedItem(clothing, itemRequest.size(), itemRequest.quantity(), rate, subtotal, reserved);
+    }
+
+    /**
+     * Tiered rental pricing. The host defines a flat rate for 1/2/3-day and
+     * 1-week windows (price_1_day, price_2_day, price_3_day, price_1_week).
+     * 4..6 day bookings fall back to the per-day base rate &times; days.
+     */
+    private BigDecimal tierRate(Clothing clothing, int rentalDays) {
+        return switch (rentalDays) {
+            case 1 -> clothing.getPrice1Day();
+            case 2 -> clothing.getPrice2Day();
+            case 3 -> clothing.getPrice3Day();
+            default -> rentalDays >= 7
+                    ? clothing.getPrice1Week()
+                    : clothing.getPricePerDay().multiply(BigDecimal.valueOf(rentalDays));
+        };
     }
 
     private void decrementStock(PreparedItem item) {
@@ -193,6 +251,21 @@ public class RentalService {
                     sizeRow.setStock(newSizeStock);
                     clothingSizeRepository.save(sizeRow);
                 });
+    }
+
+    private void restoreStock(Rental rental) {
+        for (RentalItem item : rentalItemRepository.findByRental_RentalId(rental.getRentalId())) {
+            Clothing clothing = item.getClothing();
+            clothing.setStock(clothing.getStock() + item.getQuantity());
+            clothingRepository.save(clothing);
+            if (item.getSize() != null) {
+                clothingSizeRepository.findByClothing_ClothingIdAndSize(clothing.getClothingId(), item.getSize())
+                        .ifPresent(sizeRow -> {
+                            sizeRow.setStock(sizeRow.getStock() + item.getQuantity());
+                            clothingSizeRepository.save(sizeRow);
+                        });
+            }
+        }
     }
 
     private int reservedQuantity(Long clothingId, LocalDate startDate, LocalDate endDate) {
@@ -223,7 +296,7 @@ public class RentalService {
     private void requireAccess(Rental rental) {
         User user = securityUtils.currentUser();
         boolean owner = rental.getUser().getUserId().equals(user.getUserId());
-        boolean manager = "ADMIN".equals(user.getRole()) || "OWNER".equals(user.getRole());
+        boolean manager = "ADMIN".equals(user.getRole()) || "HOST".equals(user.getRole());
         if (!owner && !manager) {
             throw new UnauthorizedException("You do not have access to this rental");
         }
@@ -232,11 +305,12 @@ public class RentalService {
     private RentalResponse toResponse(Rental rental) {
         List<RentalItemResponse> items = rentalItemRepository.findByRental_RentalIdOrderByRentalItemIdAsc(rental.getRentalId())
                 .stream()
-                .map(item -> RentalItemResponse.from(item, item.getClothing().getName(), null))
+                .map(item -> RentalItemResponse.from(item, item.getClothing().getName(), item.getSize()))
                 .toList();
         return RentalResponse.of(rental, rental.getUser().getName(), items);
     }
 
-    private record PreparedItem(Clothing clothing, String size, int quantity, BigDecimal subtotal, int reserved) {
+    private record PreparedItem(Clothing clothing, String size, int quantity, BigDecimal rate,
+                                BigDecimal subtotal, int reserved) {
     }
 }

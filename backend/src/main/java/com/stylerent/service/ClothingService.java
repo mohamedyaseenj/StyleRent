@@ -11,10 +11,13 @@ import com.stylerent.entity.ClothingSize;
 import com.stylerent.entity.RentalItem;
 import com.stylerent.exception.BadRequestException;
 import com.stylerent.exception.ResourceNotFoundException;
+import com.stylerent.entity.User;
 import com.stylerent.repository.CategoryRepository;
 import com.stylerent.repository.ClothingRepository;
 import com.stylerent.repository.ClothingSizeRepository;
 import com.stylerent.repository.RentalItemRepository;
+import com.stylerent.repository.UserRepository;
+import com.stylerent.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,15 +33,21 @@ public class ClothingService {
     private final CategoryRepository categoryRepository;
     private final ClothingSizeRepository clothingSizeRepository;
     private final RentalItemRepository rentalItemRepository;
+    private final UserRepository userRepository;
+    private final SecurityUtils securityUtils;
 
     public ClothingService(ClothingRepository clothingRepository,
                            CategoryRepository categoryRepository,
                            ClothingSizeRepository clothingSizeRepository,
-                           RentalItemRepository rentalItemRepository) {
+                           RentalItemRepository rentalItemRepository,
+                           UserRepository userRepository,
+                           SecurityUtils securityUtils) {
         this.clothingRepository = clothingRepository;
         this.categoryRepository = categoryRepository;
         this.clothingSizeRepository = clothingSizeRepository;
         this.rentalItemRepository = rentalItemRepository;
+        this.userRepository = userRepository;
+        this.securityUtils = securityUtils;
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +69,14 @@ public class ClothingService {
     @Transactional(readOnly = true)
     public List<ClothingResponse> listByColor(String color) {
         return clothingRepository.findByColorIgnoreCase(color).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClothingResponse> listByHost() {
+        Long hostId = securityUtils.currentUserId();
+        return clothingRepository.findByHost_UserId(hostId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -96,6 +113,7 @@ public class ClothingService {
         Category category = findCategory(request.categoryId());
         Clothing clothing = new Clothing();
         clothing.setCategory(category);
+        clothing.setHost(resolveHost(request.hostId()));
         applyBasicFields(clothing, request);
         applySizes(clothing, request.sizes());
         return toResponse(clothingRepository.save(clothing));
@@ -106,9 +124,14 @@ public class ClothingService {
         Clothing clothing = findClothing(id);
         Category category = findCategory(request.categoryId());
         clothing.setCategory(category);
+        if (request.hostId() != null) {
+            clothing.setHost(resolveHost(request.hostId()));
+        }
         applyBasicFields(clothing, request);
-        clothing.getSizes().clear();
-        applySizes(clothing, request.sizes());
+        if (request.sizes() != null) {
+            clothing.getSizes().clear();
+            applySizes(clothing, request.sizes());
+        }
         return toResponse(clothingRepository.save(clothing));
     }
 
@@ -167,9 +190,15 @@ public class ClothingService {
         clothing.setName(request.name());
         clothing.setDescription(request.description());
         clothing.setPricePerDay(request.pricePerDay());
+        clothing.setPrice1Day(request.price1Day());
+        clothing.setPrice2Day(request.price2Day());
+        clothing.setPrice3Day(request.price3Day());
+        clothing.setPrice1Week(request.price1Week());
         clothing.setImageUrl(request.imageUrl());
         clothing.setColor(request.color());
         clothing.setStock(request.stock());
+        clothing.setGender(request.gender() == null ? "WOMEN" : request.gender());
+        clothing.setActive(request.active() == null || request.active());
     }
 
     private void applySizes(Clothing clothing, List<ClothingSizeRequest> sizes) {
@@ -198,6 +227,18 @@ public class ClothingService {
     private Category findCategory(Long id) {
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
+    }
+
+    private User resolveHost(Long requestedHostId) {
+        User current = securityUtils.currentUser();
+        if (requestedHostId != null && "ADMIN".equals(current.getRole())) {
+            return userRepository.findById(requestedHostId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + requestedHostId));
+        }
+        if (!"HOST".equals(current.getRole())) {
+            throw new BadRequestException("Only a host can upload clothing");
+        }
+        return current;
     }
 
     private boolean categoryIsBlankOr(String category, Clothing c) {

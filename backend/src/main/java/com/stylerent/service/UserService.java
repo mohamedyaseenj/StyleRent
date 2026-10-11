@@ -6,6 +6,7 @@ import com.stylerent.dto.UserUpdateRequest;
 import com.stylerent.entity.User;
 import com.stylerent.exception.BadRequestException;
 import com.stylerent.exception.ResourceNotFoundException;
+import com.stylerent.repository.RoleRepository;
 import com.stylerent.repository.UserRepository;
 import com.stylerent.security.SecurityUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,16 +18,19 @@ import java.util.List;
 @Service
 public class UserService {
 
-    private static final List<String> ROLES = List.of("USER", "OWNER", "ADMIN");
+    private static final List<String> PLATFORM_ROLES = List.of("USER", "HOST", "ADMIN");
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityUtils securityUtils;
 
     public UserService(UserRepository userRepository,
+                       RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
                        SecurityUtils securityUtils) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.securityUtils = securityUtils;
     }
@@ -60,10 +64,27 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<UserResponse> listByRole(String role) {
+        return userRepository.findByRole(role).stream()
+                .map(UserResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public UserResponse setActive(Long id, boolean active) {
+        User user = findUser(id);
+        user.setActive(active);
+        return UserResponse.from(userRepository.save(user));
+    }
+
     @Transactional
     public UserResponse updateRole(Long id, RoleUpdateRequest request) {
-        if (!ROLES.contains(request.role())) {
-            throw new BadRequestException("Role must be one of USER, OWNER, ADMIN");
+        if (!PLATFORM_ROLES.contains(request.role())) {
+            throw new BadRequestException("Role must be one of USER, HOST, ADMIN");
+        }
+        if (roleRepository.findByRoleName(request.role()).isEmpty()) {
+            throw new BadRequestException("Role '" + request.role() + "' is not registered in the roles table");
         }
         User user = findUser(id);
         user.setRole(request.role());

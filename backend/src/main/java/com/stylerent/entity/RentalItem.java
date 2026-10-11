@@ -32,6 +32,9 @@ public class RentalItem {
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
+    @Column(name = "size", length = 20)
+    private String size;
+
     @Column(name = "price_per_day", nullable = false, precision = 10, scale = 2)
     private BigDecimal pricePerDay;
 
@@ -74,6 +77,14 @@ public class RentalItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
     }
 
     public BigDecimal getPricePerDay() {

@@ -43,13 +43,17 @@ public class PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Rental not found with id: " + request.rentalId()));
 
         boolean owner = rental.getUser().getUserId().equals(user.getUserId());
-        boolean manager = "ADMIN".equals(user.getRole()) || "OWNER".equals(user.getRole());
+        boolean manager = "ADMIN".equals(user.getRole()) || "HOST".equals(user.getRole());
         if (!owner && !manager) {
             throw new UnauthorizedException("You do not have access to this rental");
         }
         if (paymentRepository.findByRental_RentalIdOrderByPaymentDateDesc(request.rentalId()).stream()
                 .anyMatch(p -> "Paid".equals(p.getPaymentStatus()))) {
             throw new BadRequestException("This rental has already been paid");
+        }
+
+        if (request.amount() == null || request.amount().compareTo(rental.getTotalAmount()) != 0) {
+            throw new BadRequestException("Payment amount must equal the rental total of " + rental.getTotalAmount());
         }
 
         Payment payment = new Payment();
@@ -75,7 +79,7 @@ public class PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Rental not found with id: " + rentalId));
         User user = securityUtils.currentUser();
         boolean owner = rental.getUser().getUserId().equals(user.getUserId());
-        boolean manager = "ADMIN".equals(user.getRole()) || "OWNER".equals(user.getRole());
+        boolean manager = "ADMIN".equals(user.getRole()) || "HOST".equals(user.getRole());
         if (!owner && !manager) {
             throw new UnauthorizedException("You do not have access to this rental");
         }
@@ -84,10 +88,17 @@ public class PaymentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> listAll() {
+        return paymentRepository.findAll().stream()
+                .map(PaymentResponse::from)
+                .toList();
+    }
+
     private void requireAccess(Payment payment) {
         User user = securityUtils.currentUser();
         boolean owner = payment.getRental().getUser().getUserId().equals(user.getUserId());
-        boolean manager = "ADMIN".equals(user.getRole()) || "OWNER".equals(user.getRole());
+        boolean manager = "ADMIN".equals(user.getRole()) || "HOST".equals(user.getRole());
         if (!owner && !manager) {
             throw new UnauthorizedException("You do not have access to this payment");
         }

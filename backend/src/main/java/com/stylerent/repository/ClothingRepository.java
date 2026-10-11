@@ -16,5 +16,9 @@ public interface ClothingRepository extends JpaRepository<Clothing, Long> {
 
     List<Clothing> findByPricePerDayBetween(BigDecimal minPrice, BigDecimal maxPrice);
 
+    List<Clothing> findByHost_UserId(Long hostId);
+
+    long countByHost_UserId(Long hostId);
+
     List<Clothing> findAllByOrderByCreatedAtDesc();
 }
