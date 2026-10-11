@@ -2,7 +2,7 @@ package com.stylerent.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.beans.factory.annotation.Value;import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -34,11 +34,14 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService userDetailsService;
+    private final List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          CustomUserDetailsService userDetailsService) {
+                          CustomUserDetailsService userDetailsService,
+                          @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173,https://mohamedyaseenj.github.io}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
+        this.allowedOrigins = List.of(allowedOrigins.split(","));
     }
 
     @Bean
@@ -62,7 +65,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "Cache-Control"));
         config.setExposedHeaders(List.of("Authorization"));

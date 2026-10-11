@@ -5,7 +5,7 @@
 // Every call tries the real endpoint first and falls back to bundled
 // mock data when the backend is offline or VITE_API_MOCK=true.
 //
-// Backend base: http://localhost:8080/api  (see VITE_API_BASE_URL)
+// Backend base: https://stylerent-backend.onrender.com/api  (see VITE_API_BASE_URL)
 // Auth: JWT Bearer token stored in sr_session.
 // Roles (canonical): USER = customer, HOST = provider, ADMIN.
 // ============================================================
@@ -21,7 +21,7 @@ import { normalizeRole } from '../utils/roles'
 import { isValidDateRange, daysBetween } from '../utils/dateUtils'
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+  import.meta.env.VITE_API_BASE_URL || 'https://stylerent-backend.onrender.com/api'
 
 // Demo mode: true unless explicitly switched off via env.
 const MOCK_MODE = (import.meta.env.VITE_API_MOCK ?? 'true') === 'true'
