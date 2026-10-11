@@ -16,17 +16,17 @@ class DatabaseConnectionTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void contextLoadsAndConnectsToMySQL() {
+    void contextLoadsAndConnectsToPostgres() {
         String version = jdbcTemplate.queryForObject("SELECT VERSION()", String.class);
-        assertThat(version).startsWith("8.");
+        assertThat(version).startsWith("PostgreSQL");
     }
 
     @Test
     void schemaHasExpectedTables() {
         Integer tables = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'stylerentdb'",
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'",
                 Integer.class);
-        assertThat(tables).isEqualTo(8);
+        assertThat(tables).isEqualTo(9);
     }
 
     @Test
@@ -37,7 +37,7 @@ class DatabaseConnectionTest {
         Integer clothingSize = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM clothing_size", Integer.class);
         assertThat(users).isEqualTo(5);
         assertThat(category).isEqualTo(10);
-        assertThat(clothing).isEqualTo(15);
-        assertThat(clothingSize).isEqualTo(54);
+        assertThat(clothing).isEqualTo(17);
+        assertThat(clothingSize).isEqualTo(60);
     }
 }
