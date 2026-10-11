@@ -2939,3 +2939,50 @@ main {
 .tab-chip.active {
   background-color: var(--color-black);
 }
+
+@media (max-width: 767.98px) {
+  .navbar-sr .navbar-inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .navbar-sr .brand-sr {
+    justify-self: center;
+    min-width: 0;
+    gap: 6px;
+    font-size: clamp(16px, 4.5vw, 18px);
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+  .navbar-sr .brand-sr .brand-mark {
+    flex-shrink: 0;
+  }
+  .navbar-sr .mobile-menu-toggle,
+  .navbar-sr .nav-actions-sr .nav-icon-btn {
+    width: 34px;
+    height: 36px;
+  }
+  .navbar-sr .nav-actions-sr {
+    gap: 2px;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 359.98px) {
+  .navbar-sr .brand-sr {
+    gap: 5px;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+  }
+  .navbar-sr .brand-sr .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .navbar-sr .mobile-menu-toggle,
+  .navbar-sr .nav-actions-sr .nav-icon-btn {
+    width: 32px;
+  }
+  .navbar-sr .nav-actions-sr > :last-child {
+    display: none;
+  }
+}
