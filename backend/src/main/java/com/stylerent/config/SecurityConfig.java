@@ -38,7 +38,7 @@ public class SecurityConfig {
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           CustomUserDetailsService userDetailsService,
-                          @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173,https://mohamedyaseenj.github.io}") String allowedOrigins) {
+                          @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173,https://mohamedyaseenj.github.io,https://stylerent-frontend.onrender.com}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
         this.allowedOrigins = List.of(allowedOrigins.split(","));
